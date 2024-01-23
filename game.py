@@ -38,13 +38,18 @@ YELLOW = (255, 255, 0)
 DISPLAY_WIDTH = 1280
 DISPLAY_HEIGHT = 720
 
-TABLE_WIDTH = 940
-TABLE_HEIGHT = 540
-TABLE_INNER_WIDTH = 900
-TABLE_INNER_HEIGHT = 500
+TABLE_LONGTH = 2.7432 # 9 feet
+TABLE_WIDTH = 1.524 # 5 feet
+TABLE_HEIGHT = 0.762 # 2.5 feet
 
-NET_WIDTH = 10
-NET_HEIGHT = TABLE_HEIGHT
+METER_TO_PIXEL = 328.084 # 1 meter = 328.084 pixel
+
+TABLE_LONGTH_PIXEL = int(TABLE_LONGTH * METER_TO_PIXEL)
+TABLE_WIDTH_PIXEL = int(TABLE_WIDTH * METER_TO_PIXEL)
+TABLE_HEIGHT_PIXEL = int(TABLE_HEIGHT * METER_TO_PIXEL)
+
+NET_WIDTH_PIXEL = 10
+NET_LONGTH_PIXEL = TABLE_WIDTH_PIXEL
 
 BLOCK_SIZE = 20
 SPEED = 20
@@ -52,8 +57,7 @@ SPEED = 20
 class PingPongGameAI:
     
     def __init__(self, w=DISPLAY_WIDTH, h=DISPLAY_HEIGHT):
-        self.w = w
-        self.h = h
+        self.display_size = vec2(w, h)
         self.players = [None, None]
         self.players[0] = player.PingPongPlayerAI()
         self.players[1] = player.PingPongPlayerAI()
@@ -63,16 +67,19 @@ class PingPongGameAI:
         self.players[1].action = player.Action.WAIT
         
         # init display
-        self.display = pygame.display.set_mode((self.w, self.h))
+        self.display = pygame.display.set_mode(self.display_size)
         pygame.display.set_caption('PingPongGame')
         self.clock = pygame.time.Clock()
         self.reset()
+
+    def get_table_size_pixel(self):
+        return vec2(TABLE_LONGTH, TABLE_WIDTH) * METER_TO_PIXEL
         
     def reset(self):        
         # init game state
         self.direction = Direction.RIGHT
 
-        player_max_area_size = vec2((DISPLAY_WIDTH - TABLE_WIDTH)//2, DISPLAY_HEIGHT)
+        player_max_area_size = vec2((DISPLAY_WIDTH - TABLE_LONGTH_PIXEL)//2, DISPLAY_HEIGHT)
         player_area_center = vec2(player_max_area_size.x // 2, player_max_area_size.y // 2)
 
         self.players[0].reset()
@@ -90,15 +97,10 @@ class PingPongGameAI:
 
         self.score = 0
         self.ball.reset()
-        self.ball.pos = vec3(0, DISPLAY_HEIGHT//2, 0.5)
-        self.ball.speed = vec3(1.0, 0.0, 1.0)
+        self.ball.pos = vec3((DISPLAY_WIDTH - (TABLE_LONGTH_PIXEL - 40))//2, DISPLAY_HEIGHT//2, 50.0)
+        self.ball.speed = vec3(10.0, 0.0, 10.0)
         self.frame_iteration = 0
     
-    def _place_ball(self):
-        x = random.randint(0, (self.w-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE 
-        y = random.randint(0, (self.h-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE
-        self.ball = vec2(x, y)
-        
     def play_step(self, action):
         self.frame_iteration += 1
         # 1. collect user input
@@ -120,12 +122,6 @@ class PingPongGameAI:
 #           game_over = True
 #          game_reward = -10
 #            return game_reward, game_over, self.score
-            
-        # 4. place new food or just move
-        if self.head == self.ball:
-            self.score += 1
-            game_reward = 10
-            self._place_ball()
         
         # 5. update ui and clock
         self._update_ui()
@@ -137,7 +133,7 @@ class PingPongGameAI:
         if pt is None:
             pt = self.head
         # hits boundary
-        if pt.x > self.w - BLOCK_SIZE or pt.x < 0 or pt.y > self.h - BLOCK_SIZE or pt.y < 0:
+        if pt.x > self.display_size.x - BLOCK_SIZE or pt.x < 0 or pt.y > self.display_size.y - BLOCK_SIZE or pt.y < 0:
             return True
 
         return False
@@ -148,26 +144,25 @@ class PingPongGameAI:
         # draw players.
         pygame.draw.rect(self.display, YELLOW, self.players[0].getArea(), 10)
         pygame.draw.rect(self.display, YELLOW, self.players[1].getArea(), 10)
-        pygame.draw.rect(self.display, GREEN, pygame.Rect(self.players[0].pos.x, self.players[0].pos.y, BLOCK_SIZE, BLOCK_SIZE))
-        pygame.draw.rect(self.display, BLUE2, pygame.Rect(self.players[0].pos.x+4, self.players[0].pos.y+4, BLOCK_SIZE-8, BLOCK_SIZE-8))
-        pygame.draw.rect(self.display, GREEN, pygame.Rect(self.players[1].pos.x, self.players[1].pos.y, BLOCK_SIZE, BLOCK_SIZE))
-        pygame.draw.rect(self.display, BLUE2, pygame.Rect(self.players[1].pos.x+4, self.players[1].pos.y+4, BLOCK_SIZE-8, BLOCK_SIZE-8))
+        pygame.draw.rect(self.display, GREEN, pygame.Rect(self.players[0].pos.xy, vec2(BLOCK_SIZE)))
+        pygame.draw.rect(self.display, BLUE2, pygame.Rect(self.players[0].pos.xy+vec2(4), vec2(BLOCK_SIZE)-vec2(8)))
+        pygame.draw.rect(self.display, GREEN, pygame.Rect(self.players[1].pos.xy, vec2(BLOCK_SIZE)))
+        pygame.draw.rect(self.display, BLUE2, pygame.Rect(self.players[1].pos.xy+vec2(4), vec2(BLOCK_SIZE)-vec2(8)))
         
         # draw table.
-        table_offset_x = (self.w - TABLE_WIDTH) // 2
-        table_offset_y = (self.h - TABLE_HEIGHT) // 2
-        table_inner_offset_x = (self.w - TABLE_INNER_WIDTH) // 2
-        table_inner_offset_y = (self.h - TABLE_INNER_HEIGHT) // 2
-        pygame.draw.rect(self.display, LIGHT_BLUE, pygame.Rect(table_offset_x, table_offset_y, TABLE_WIDTH, TABLE_HEIGHT))
-        pygame.draw.rect(self.display, BLUE1, pygame.Rect(table_inner_offset_x, table_inner_offset_y, TABLE_INNER_WIDTH, TABLE_INNER_HEIGHT))
+        table_size_pixel = self.get_table_size_pixel()
+        table_offset = (self.display_size - table_size_pixel) // 2
+        table_inner_offset = (self.display_size - (table_size_pixel - vec2(40))) // 2
+        pygame.draw.rect(self.display, LIGHT_BLUE, pygame.Rect(table_offset, table_size_pixel))
+        pygame.draw.rect(self.display, BLUE1, pygame.Rect(table_inner_offset, table_size_pixel - vec2(40)))
 
         # draw net.
-        net_offset_x = (self.w - NET_WIDTH) // 2
-        net_offset_y = (self.h - NET_HEIGHT) // 2
-        pygame.draw.rect(self.display, WHITE, pygame.Rect(net_offset_x, net_offset_y, NET_WIDTH, NET_HEIGHT))
+        net_size = vec2(NET_WIDTH_PIXEL, NET_LONGTH_PIXEL)
+        net_offset = (self.display_size - net_size) // 2
+        pygame.draw.rect(self.display, WHITE, pygame.Rect(net_offset, net_size))
         
         # draw ball.
-        pygame.draw.circle(self.display, RED, vec2(self.ball.pos.x, self.ball.pos.y), self.ball.pos.z * 12 + 12)
+        pygame.draw.circle(self.display, RED, self.ball.pos.xy, self.ball.pos.z)
         
         text = font.render("Game : " + str(self.frame_iteration) + "; Score: " + str(self.score), True, WHITE)
         self.display.blit(text, [0, 0])
