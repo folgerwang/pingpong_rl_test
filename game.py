@@ -38,18 +38,30 @@ YELLOW = (255, 255, 0)
 DISPLAY_WIDTH = 1280
 DISPLAY_HEIGHT = 720
 
-TABLE_LONGTH = 2.7432 # 9 feet
-TABLE_WIDTH = 1.524 # 5 feet
-TABLE_HEIGHT = 0.762 # 2.5 feet
+DISPLAY_ASPECT = DISPLAY_HEIGHT / DISPLAY_WIDTH
 
-METER_TO_PIXEL = 328.084 # 1 meter = 328.084 pixel
+FIELD_WIDTH_FEET = 16 # 16 feet
+FIELD_HEIGHT_FEET = FIELD_WIDTH_FEET * DISPLAY_ASPECT # 9 feet
 
-TABLE_LONGTH_PIXEL = int(TABLE_LONGTH * METER_TO_PIXEL)
-TABLE_WIDTH_PIXEL = int(TABLE_WIDTH * METER_TO_PIXEL)
-TABLE_HEIGHT_PIXEL = int(TABLE_HEIGHT * METER_TO_PIXEL)
+TABLE_LONGTH_FEET = 9 # 9 feet
+TABLE_WIDTH_FEET = 5 # 5 feet
+TABLE_HEIGHT_FEET = 2.5 # 2.5 feet
 
-NET_WIDTH_PIXEL = 10
-NET_LONGTH_PIXEL = TABLE_WIDTH_PIXEL
+FOOT_TO_METER = 0.3048
+
+FIELD_WIDTH = FIELD_WIDTH_FEET * FOOT_TO_METER
+FIELD_HEIGHT = FIELD_HEIGHT_FEET * FOOT_TO_METER
+
+TABLE_LONGTH = TABLE_LONGTH_FEET * FOOT_TO_METER
+TABLE_WIDTH = TABLE_WIDTH_FEET * FOOT_TO_METER
+TABLE_HEIGHT = TABLE_HEIGHT_FEET * FOOT_TO_METER
+
+#TABLE_LONGTH_PIXEL = int(TABLE_LONGTH * METER_TO_PIXEL)
+#TABLE_WIDTH_PIXEL = int(TABLE_WIDTH * METER_TO_PIXEL)
+#TABLE_HEIGHT_PIXEL = int(TABLE_HEIGHT * METER_TO_PIXEL)
+
+#NET_WIDTH_PIXEL = 10
+#NET_LONGTH_PIXEL = TABLE_WIDTH_PIXEL
 
 BLOCK_SIZE = 20
 SPEED = 20
@@ -58,6 +70,7 @@ class PingPongGameAI:
     
     def __init__(self, w=DISPLAY_WIDTH, h=DISPLAY_HEIGHT):
         self.display_size = vec2(w, h)
+        self.to_display_scale = vec2(w/FIELD_WIDTH, h/FIELD_HEIGHT)
         self.players = [None, None]
         self.players[0] = player.PingPongPlayerAI()
         self.players[1] = player.PingPongPlayerAI()
@@ -71,6 +84,9 @@ class PingPongGameAI:
         pygame.display.set_caption('PingPongGame')
         self.clock = pygame.time.Clock()
         self.reset()
+    
+    def to_display(self, pos):
+        return pos * self.to_display_scale
 
     def get_table_size_pixel(self):
         return vec2(TABLE_LONGTH, TABLE_WIDTH) * METER_TO_PIXEL
@@ -79,18 +95,18 @@ class PingPongGameAI:
         # init game state
         self.direction = Direction.RIGHT
 
-        player_max_area_size = vec2((DISPLAY_WIDTH - TABLE_LONGTH_PIXEL)//2, DISPLAY_HEIGHT)
-        player_area_center = vec2(player_max_area_size.x // 2, player_max_area_size.y // 2)
+        player_max_area_size = vec2((FIELD_WIDTH - TABLE_LONGTH)/2, FIELD_HEIGHT)
+        player_area_center = vec2(player_max_area_size.x / 2, player_max_area_size.y / 2)
 
         self.players[0].reset()
-        player1_pos = player_area_center
+        player1_pos = player_area_center - vec2(FIELD_WIDTH / 2, FIELD_HEIGHT / 2)
         self.players[0].set_area(player_area_center, player_max_area_size)
         self.players[0].set_player(player1_pos, Direction.RIGHT)
         self.players[0].action = player.Action.THROW
 
         self.players[1].reset()
-        player2_area_center = vec2(DISPLAY_WIDTH - player_area_center.x, DISPLAY_HEIGHT - player_area_center.y)
-        player2_pos = player2_area_center
+        player2_area_center = vec2(FIELD_WIDTH - player_area_center.x, FIELD_HEIGHT)
+        player2_pos = player2_area_center - vec2(FIELD_WIDTH / 2, FIELD_HEIGHT / 2)
         self.players[1].set_area(player2_area_center, player_max_area_size)
         self.players[1].set_player(player2_pos, Direction.LEFT)
         self.players[1].action = player.Action.WAIT
