@@ -21,36 +21,38 @@ class PingPongPlayerAI:
         self.action = Action.WAIT
         self.reset()
 
-    def set_area(self, center, size):
+    def setArea(self, center, size):
         self.area_center = center
         self.area_size = size
 
-    def set_player(self, pt, direction):
+    def setPlayer(self, pt, direction):
         self.pos = pt
         self.facing_dir = direction
         
     def reset(self):        
         # init game state
-        self.set_player(vec2(0, 0), game.Direction.RIGHT)
+        self.setPlayer(vec2(0, 0), game.Direction.RIGHT)
         self.pos = vec2(self.area_size.x // 2, self.area_size.y // 2)
         self.action = Action.WAIT
         
         self.score = 0
         self.ball = None
     
-    def getArea(self):
-        area = pygame.Rect(self.area_center.x - self.area_size.x//2, self.area_center.y - self.area_size.y//2, self.area_size.x, self.area_size.y)
-        return area
+    def drawPlayableArea(self, pp_game):
+        pp_game.drawRect(game.YELLOW, self.area_center, self.area_size, 10)
+    
+    def drawPlayerIcon(self, pp_game):
+        pygame.draw.rect(pp_game.display, game.GREEN, pygame.Rect(pp_game.toScreenCoord(self.pos.xy), vec2(game.BLOCK_SIZE)))
+        pygame.draw.rect(pp_game.display, game.BLUE2, pygame.Rect(pp_game.toScreenCoord(self.pos.xy)+vec2(4), vec2(game.BLOCK_SIZE)-vec2(8)))
 
-    def play_step(self, action):
+    def playStep(self, action):
         # 2. move
-        self._move(action) # update the head
-        self.snake.insert(0, self.head)
+        self.move(action) # update the head
         
         # 3. check if game over
         game_reward = 0
         game_over = False
-        if self.is_collision() or self.frame_iteration > 100*len(self.snake):
+        if self.isCollision() or self.frame_iteration > 100*len(self.snake):
             game_over = True
             game_reward = -10
             return game_reward, game_over, self.score
@@ -69,7 +71,7 @@ class PingPongPlayerAI:
         # 6. return game over and score
         return game_reward, game_over, self.score
     
-    def is_collision(self, pt=None):
+    def isCollision(self, pt=None):
         if pt is None:
             pt = self.head
         # hits boundary
@@ -81,7 +83,7 @@ class PingPongPlayerAI:
         
         return False
         
-    def _move(self, action):
+    def move(self, action):
         # [straight, right, left]
 
         clock_wise = [game.Direction.RIGHT, game.Direction.DOWN, game.Direction.LEFT, game.Direction.UP]

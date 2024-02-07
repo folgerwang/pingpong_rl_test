@@ -24,7 +24,7 @@ class PingPongBall:
         self.pos = pos
         self.speed = speed
     
-    def play_step(self, delta_t):
+    def playStep(self, delta_t):
         new_pos_x = self.pos.x + self.speed.x * delta_t
         new_pos_y = self.pos.y + self.speed.y * delta_t
         new_pos_z = self.pos.z + (self.speed.z + 0.5 * GRAVITY_RATE * delta_t) * delta_t
@@ -39,9 +39,9 @@ class PingPongBall:
         self.pos = vec3(new_pos_x, new_pos_y, new_pos_z)
         self.speed = vec3(new_speed_x, new_speed_y, new_speed_z)
     
-    def is_collision(self, pt=None):
+    def isCollision(self, pt=None):
         pass
         
-    def _move(self, action):
+    def move(self, action):
         pass
             

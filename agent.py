@@ -24,7 +24,7 @@ class Agent:
         self.target_trainer = None # optimiser
         self.target_update_counter = 0 # every 10k steps we update target model
         
-    def get_state(self, game, index):
+    def getState(self, game, index):
         BLOCK_SIZE = 10
         head = game.players[index].pos
         point_l = vec2(head.x - BLOCK_SIZE, head.y)
@@ -39,22 +39,22 @@ class Agent:
 
         state = [
             # Danger straight
-            (dir_r and game.is_collision(point_r)) or
-            (dir_l and game.is_collision(point_l)) or
-            (dir_u and game.is_collision(point_u)) or
-            (dir_d and game.is_collision(point_d)),
+            (dir_r and game.isCollision(point_r)) or
+            (dir_l and game.isCollision(point_l)) or
+            (dir_u and game.isCollision(point_u)) or
+            (dir_d and game.isCollision(point_d)),
         
             # Danger right
-            (dir_u and game.is_collision(point_r)) or
-            (dir_d and game.is_collision(point_l)) or
-            (dir_l and game.is_collision(point_u)) or
-            (dir_r and game.is_collision(point_d)),
+            (dir_u and game.isCollision(point_r)) or
+            (dir_d and game.isCollision(point_l)) or
+            (dir_l and game.isCollision(point_u)) or
+            (dir_r and game.isCollision(point_d)),
 
             # Danger left
-            (dir_d and game.is_collision(point_r)) or
-            (dir_u and game.is_collision(point_l)) or
-            (dir_r and game.is_collision(point_u)) or
-            (dir_l and game.is_collision(point_d)),
+            (dir_d and game.isCollision(point_r)) or
+            (dir_u and game.isCollision(point_l)) or
+            (dir_r and game.isCollision(point_u)) or
+            (dir_l and game.isCollision(point_d)),
 
             # Move direction
             dir_l,
@@ -75,7 +75,7 @@ class Agent:
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
 
-    def train_long_memory(self):
+    def trainLongMemory(self):
         if len(self.memory) > BATCH_SIZE:
             # sample a random batch from memory
             mini_sample = random.sample(self.memory, BATCH_SIZE)
@@ -83,12 +83,12 @@ class Agent:
             mini_sample = self.memory
         
         states, actions, rewards, next_states, dones = zip(*mini_sample)
-        self.trainer.train_step(states, actions, rewards, next_states, dones)
+        self.trainer.trainStep(states, actions, rewards, next_states, dones)
 
-    def train_short_memory(self, state, action, reward, next_state, done):
-        self.trainer.train_step(state, action, reward, next_state, done)
+    def trainShortMemory(self, state, action, reward, next_state, done):
+        self.trainer.trainStep(state, action, reward, next_state, done)
 
-    def get_action(self, state):
+    def getAction(self, state):
         self.epsilon = 80 - self.n_games
         final_move = [0, 0, 0]
         if random.randint(0, 200) < self.epsilon:
@@ -112,17 +112,17 @@ def train():
     while True:
         # get old state
         
-        state_old = agent.get_state(game, 0)
+        state_old = agent.getState(game, 0)
         
         # get move
-        final_move = agent.get_action(state_old)
+        final_move = agent.getAction(state_old)
         
         # perform move and get new state
-        reward, done, score = game.play_step(final_move)
-        state_new = agent.get_state(game, 0)
+        reward, done, score = game.playStep(final_move)
+        state_new = agent.getState(game, 0)
         
         # train short memory
-        agent.train_short_memory(state_old, final_move, reward, state_new, done)
+        agent.trainShortMemory(state_old, final_move, reward, state_new, done)
         
         # remember
         agent.remember(state_old, final_move, reward, state_new, done)
@@ -131,7 +131,7 @@ def train():
             # train long memory, plot result
             game.reset()
             agent.n_games += 1
-            agent.train_long_memory()
+            agent.trainLongMemory()
             
             if score > record:
                 record = score
