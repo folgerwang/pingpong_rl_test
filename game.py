@@ -117,8 +117,8 @@ class PingPongGameAI:
 
         self.score = 0
         self.ball.reset()
-        self.ball.pos = vec3(-player_distance_to_center + 0.1, 0, 1.0)
-        self.ball.speed = vec3(0.1, 0.0, 0.1)
+        self.ball.pos = vec3(-player_distance_to_center + 0.1, 0, 1.5)
+        self.ball.speed = vec3(2.0, 0.0, 0.1)
         self.frame_iteration = 0
     
     def playStep(self, action):
@@ -130,7 +130,7 @@ class PingPongGameAI:
                 quit()
         
         # 2. throw up ball.
-        self.ball.playStep(1.0/30.0)
+        self.ball.playStep(1.0/30.0, vec2(0, 0), self.table_size_, TABLE_HEIGHT, vec2(0, 0), self.net_size_, NET_HEIGHT)
 
         # 2. move
         self.move(action) # update the head
@@ -178,12 +178,8 @@ class PingPongGameAI:
         self.drawRect(WHITE, vec2(0, 0), self.net_size_)
 
 
-        #net_size = vec2(NET_WIDTH_PIXEL, NET_LONGTH_PIXEL)
-        #net_offset = (self.display_size - net_size) // 2
-        #pygame.draw.rect(self.display, WHITE, pygame.Rect(net_offset, net_size))
-        
         # draw ball.
-        #pygame.draw.circle(self.display, RED, self.ball.pos.xy, self.ball.pos.z)
+        pygame.draw.circle(self.display, RED, self.toScreenCoord(self.ball.pos.xy), self.ball.pos.z * 10.0)
         
         text = font.render("Game : " + str(self.frame_iteration) + "; Score: " + str(self.score), True, WHITE)
         self.display.blit(text, [0, 0])
