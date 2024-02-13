@@ -3,6 +3,7 @@ import random
 from enum import Enum
 from collections import namedtuple
 from pygame import Vector2 as vec2
+from pygame import Vector3 as vec3
 import numpy as np
 import game
 
@@ -13,12 +14,15 @@ class Action(Enum):
 
 class PingPongPlayerAI:
     
-    def __init__(self):
-        self.pos = vec2(0, 0)
+    def __init__(self, index):
+        self.pos = vec3(0, 0, 0)
+        self.pad_pos = self.pos
+        self.pad_dir = vec3(1, 0, 0)
         self.area_center = vec2(0, 0)
         self.area_size = vec2(0, 0)
-        self.facing_dir = game.Direction.RIGHT
+        self.facing_dir = vec3(1, 0, 0)
         self.action = Action.WAIT
+        self.index = index
         self.reset()
 
     def setArea(self, center, size):
@@ -27,12 +31,15 @@ class PingPongPlayerAI:
 
     def setPlayer(self, pt, direction):
         self.pos = pt
+        self.pad_pos = pt
         self.facing_dir = direction
+        self.pad_dir = self.facing_dir
         
     def reset(self):        
         # init game state
-        self.setPlayer(vec2(0, 0), game.Direction.RIGHT)
-        self.pos = vec2(self.area_size.x // 2, self.area_size.y // 2)
+        self.setPlayer(vec3(0, 0, 0), vec3(1, 0, 0))
+        self.pos = vec3(self.area_size.x / 2, self.area_size.y / 2, 1.0)
+        self.pad_pos = self.pos
         self.action = Action.WAIT
         
         self.score = 0
@@ -72,44 +79,46 @@ class PingPongPlayerAI:
         return game_reward, game_over, self.score
     
     def isCollision(self, pt=None):
-        if pt is None:
-            pt = self.head
-        # hits boundary
-        if pt.x > self.w - game.BLOCK_SIZE or pt.x < 0 or pt.y > self.h - game.BLOCK_SIZE or pt.y < 0:
-            return True
+        pass
+#        if pt is None:
+#            pt = self.head
+#        # hits boundary
+#        if pt.x > self.w - game.BLOCK_SIZE or pt.x < 0 or pt.y > self.h - game.BLOCK_SIZE or pt.y < 0:
+#            return True
         # hits itself
-        if pt in self.snake[1:]:
-            return True
+#        if pt in self.snake[1:]:
+#            return True
         
-        return False
+#        return False
         
     def move(self, action):
+        pass
         # [straight, right, left]
 
-        clock_wise = [game.Direction.RIGHT, game.Direction.DOWN, game.Direction.LEFT, game.Direction.UP]
-        idx = clock_wise.index(self.direction)
+#        clock_wise = [game.Direction.RIGHT, game.Direction.DOWN, game.Direction.LEFT, game.Direction.UP]
+#        idx = clock_wise.index(self.direction)
 
-        if np.array_equal(action, [1, 0, 0]):
-            new_dir = clock_wise[idx] # no change
-        elif np.array_equal(action, [0, 1, 0]):
-            next_idx = (idx + 1) % 4 # right turn r -> d -> l -> u
-            new_dir = clock_wise[next_idx]
-        else: # [0, 0, 1]
-            next_idx = (idx - 1) % 4 # left turn r -> u -> l -> d   
-            new_dir = clock_wise[next_idx]
+#        if np.array_equal(action, [1, 0, 0]):
+#            new_dir = clock_wise[idx] # no change
+#        elif np.array_equal(action, [0, 1, 0]):
+#            next_idx = (idx + 1) % 4 # right turn r -> d -> l -> u
+#            new_dir = clock_wise[next_idx]
+#        else: # [0, 0, 1]
+#            next_idx = (idx - 1) % 4 # left turn r -> u -> l -> d   
+#            new_dir = clock_wise[next_idx]
 
-        self.direction = new_dir
+#        self.direction = new_dir
 
-        x = self.head.x
-        y = self.head.y
-        if self.direction == game.Direction.RIGHT:
-            x += game.BLOCK_SIZE
-        elif self.direction == game.Direction.LEFT:
-            x -= game.BLOCK_SIZE
-        elif self.direction == game.Direction.DOWN:
-            y += game.BLOCK_SIZE
-        elif self.direction == game.Direction.UP:
-            y -= game.BLOCK_SIZE
+#        x = self.head.x
+#        y = self.head.y
+#        if self.direction == game.Direction.RIGHT:
+#            x += game.BLOCK_SIZE
+#        elif self.direction == game.Direction.LEFT:
+#            x -= game.BLOCK_SIZE
+#        elif self.direction == game.Direction.DOWN:
+#            y += game.BLOCK_SIZE
+#        elif self.direction == game.Direction.UP:
+#            y -= game.BLOCK_SIZE
             
-        self.head = Point(x, y)
+#        self.head = Point(x, y)
             

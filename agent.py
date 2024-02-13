@@ -2,7 +2,7 @@ import torch
 import random
 import numpy as np
 from collections import deque
-from game import PingPongGameAI, Direction
+from game import PingPongGameAI
 from model import Linear_QNet, QTrainer
 from pygame import Vector2 as vec2
 from helper import plot
@@ -18,55 +18,33 @@ class Agent:
         self.epsilon = 0 # randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
-        self.model = Linear_QNet(11, 256, 3) # neural net
+        self.model = Linear_QNet(18, 256, 12) # neural net
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma) # optimiser
         self.target_model = None # this is what we .predict against every step
         self.target_trainer = None # optimiser
         self.target_update_counter = 0 # every 10k steps we update target model
         
     def getState(self, game, index):
-        BLOCK_SIZE = 10
-        head = game.players[index].pos
-        point_l = vec2(head.x - BLOCK_SIZE, head.y)
-        point_r = vec2(head.x + BLOCK_SIZE, head.y)
-        point_u = vec2(head.x, head.y - BLOCK_SIZE)
-        point_d = vec2(head.x, head.y + BLOCK_SIZE)
-
-        dir_l = game.direction == Direction.LEFT
-        dir_r = game.direction == Direction.RIGHT
-        dir_u = game.direction == Direction.UP
-        dir_d = game.direction == Direction.DOWN
-
         state = [
             # Danger straight
-            (dir_r and game.isCollision(point_r)) or
-            (dir_l and game.isCollision(point_l)) or
-            (dir_u and game.isCollision(point_u)) or
-            (dir_d and game.isCollision(point_d)),
-        
-            # Danger right
-            (dir_u and game.isCollision(point_r)) or
-            (dir_d and game.isCollision(point_l)) or
-            (dir_l and game.isCollision(point_u)) or
-            (dir_r and game.isCollision(point_d)),
-
-            # Danger left
-            (dir_d and game.isCollision(point_r)) or
-            (dir_u and game.isCollision(point_l)) or
-            (dir_r and game.isCollision(point_u)) or
-            (dir_l and game.isCollision(point_d)),
-
-            # Move direction
-            dir_l,
-            dir_r,
-            dir_u,
-            dir_d,
-
-            # Food location
-            game.ball.pos.x < head.x,  # food left
-            game.ball.pos.x > head.x,  # food right
-            game.ball.pos.y < head.y,  # food up
-            game.ball.pos.y > head.y  # food down
+            game.players[0].pad_pos.x,
+            game.players[0].pad_pos.y,
+            game.players[0].pad_pos.z,
+            game.players[0].pad_dir.x,
+            game.players[0].pad_dir.y,
+            game.players[0].pad_dir.z,
+            game.players[1].pad_pos.x,
+            game.players[1].pad_pos.y,
+            game.players[1].pad_pos.z,
+            game.players[1].pad_dir.x,
+            game.players[1].pad_dir.y,
+            game.players[1].pad_dir.z,
+            game.ball.pos.x,
+            game.ball.pos.y,
+            game.ball.pos.z,
+            game.ball.speed.x,
+            game.ball.speed.y,
+            game.ball.speed.z
         ]
 
         return np.array(state, dtype=int)
@@ -89,18 +67,10 @@ class Agent:
         self.trainer.trainStep(state, action, reward, next_state, done)
 
     def getAction(self, state):
-        self.epsilon = 80 - self.n_games
-        final_move = [0, 0, 0]
-        if random.randint(0, 200) < self.epsilon:
-            move = random.randint(0, 2)
-            final_move[move] = 1
-        else:
-            state0 = torch.tensor(state, dtype=torch.float)
-            prediction = self.model(state0)
-            move = torch.argmax(prediction).item()
-            final_move[move] = 1
+        state0 = torch.tensor(state, dtype=torch.float)
+        prediction = self.model(state0)
         
-        return final_move
+        return prediction
 
 def train():
     plot_scores = []

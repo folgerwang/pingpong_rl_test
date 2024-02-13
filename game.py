@@ -18,13 +18,6 @@ font = pygame.font.Font('arial.ttf', 25)
 # game_iteration
 # is_collision
 
-
-class Direction(Enum):
-    RIGHT = 1
-    LEFT = 2
-    UP = 3
-    DOWN = 4
-    
 # rgb colors
 WHITE = (255, 255, 255)
 RED = (200,0,0)
@@ -80,8 +73,8 @@ class PingPongGameAI:
         self.table_origin_ = -self.table_size_ / 2
 
         self.players = [None, None]
-        self.players[0] = player.PingPongPlayerAI()
-        self.players[1] = player.PingPongPlayerAI()
+        self.players[0] = player.PingPongPlayerAI(0)
+        self.players[1] = player.PingPongPlayerAI(1)
         self.ball = ball.PingPongBall()
 
         self.players[0].action = player.Action.THROW
@@ -101,18 +94,16 @@ class PingPongGameAI:
 
     def reset(self):        
         # init game state
-        self.direction = Direction.RIGHT
-
         player_distance_to_center = (self.table_size_.x + self.player_area_size_.x) / 2
 
         self.players[0].reset()
         self.players[0].setArea(vec2(-player_distance_to_center, 0.0), self.player_area_size_)
-        self.players[0].setPlayer(vec2(-player_distance_to_center, 0.0), Direction.RIGHT)
+        self.players[0].setPlayer(vec3(-player_distance_to_center, 0.0, 1.0), vec3(1, 0, 0))
         self.players[0].action = player.Action.THROW
 
         self.players[1].reset()
         self.players[1].setArea(vec2(player_distance_to_center, 0.0), self.player_area_size_)
-        self.players[1].setPlayer(vec2(player_distance_to_center, 0.0), Direction.LEFT)
+        self.players[1].setPlayer(vec3(player_distance_to_center, 0.0, 1.0), vec3(-1, 0, 0))
         self.players[1].action = player.Action.WAIT
 
         self.score = 0
@@ -129,12 +120,12 @@ class PingPongGameAI:
                 pygame.quit()
                 quit()
         
-        # 2. throw up ball.
+        self.players[0].playStep(action[0])
+        self.players[1].playStep(action[1])
+
+        # 2. ball movement.
         self.ball.playStep(1.0/30.0, vec2(0, 0), self.table_size_, TABLE_HEIGHT, vec2(0, 0), self.net_size_, NET_HEIGHT)
 
-        # 2. move
-        self.move(action) # update the head
-        
         # 3. check if game over
         game_reward = 0
         game_over = False

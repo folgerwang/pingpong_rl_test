@@ -96,7 +96,8 @@ class PingPongBall:
 
         while remaining_t > 0 :
             collided = False
-            if self.pos.z > table_height : # ball is above the table, so first check if collision with net
+            # ball is above the table, so first check if collision with net
+            if self.pos.z > table_height :
                 if (target_pos_xy.x < net_center.x and self.pos.x > net_center.x or
                     target_pos_xy.x > net_center.x and self.pos.x < net_center.x): # ball is possible collision with net
                     updated_remaining_t = self.boucingOnNet(net_center, net_size, table_height, net_height, remaining_t)
@@ -106,16 +107,26 @@ class PingPongBall:
                         target_pos_xy, target_pos_z, target_speed_xy, target_speed_z = self.getTargetPosAndSpeed(remaining_t)
                         collided = True
 
-            if (target_pos_z > table_height and self.pos.z < table_height or
-                target_pos_z < table_height and self.pos.z > table_height): #possible collision with table
-                updated_remaining_t = self.boucingOnTable(table_center, table_size, table_height, delta_t)
+            # ball is passing through the table, possible collision with table
+            if (target_pos_z < table_height and self.pos.z > table_height):
+                updated_remaining_t = self.boucingOnTable(table_center, table_size, table_height, remaining_t)
                 if updated_remaining_t != remaining_t:
                     print("bouncing on table")
                     remaining_t = updated_remaining_t
                     target_pos_xy, target_pos_z, target_speed_xy, target_speed_z = self.getTargetPosAndSpeed(remaining_t)
                     collided = True
 
-            if target_pos_z < 0: # ball is passing through the ground
+            # ball came from bottom up, possible collision with table
+            if (target_pos_z > table_height and self.pos.z < table_height):
+                updated_remaining_t = self.boucingOnTable(table_center, table_size, table_height, remaining_t)
+                if updated_remaining_t != remaining_t:
+                    print("bouncing on to table")
+                    remaining_t = updated_remaining_t
+                    target_pos_xy, target_pos_z, target_speed_xy, target_speed_z = self.getTargetPosAndSpeed(remaining_t)
+                    collided = True
+
+            # ball is passing through the ground, will collision with ground
+            if target_pos_z < 0:
                 updated_remaining_t = self.bouncingOnGround(remaining_t)
                 if updated_remaining_t != remaining_t:
                     print("bouncing on ground")
