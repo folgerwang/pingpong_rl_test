@@ -108,9 +108,7 @@ class PingPongBall:
 
             if (target_pos_z > table_height and self.pos.z < table_height or
                 target_pos_z < table_height and self.pos.z > table_height): #possible collision with table
-                print("possible collision with table")
                 updated_remaining_t = self.boucingOnTable(table_center, table_size, table_height, delta_t)
-                print("updated_remaining_t = ", updated_remaining_t, "remaining_t = ", remaining_t)
                 if updated_remaining_t != remaining_t:
                     print("bouncing on table")
                     remaining_t = updated_remaining_t
